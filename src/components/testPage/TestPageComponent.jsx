@@ -1,10 +1,45 @@
 "use client";
+
+import { useState, useEffect } from "react";
 import Script from "next/script";
 
 export default function DemoPage() {
+  // store streaming logs into React state array
+  const [streamLogs, setStreamLogs] = useState("");
+
+  function parseResLog(log) {
+    // Must contain [Res]
+    if (!log.includes("[Res]")) return null;
+
+    try {
+      // Extract JSON starting after [Res]:
+      const match = log.match(/\[Res\]:\s*(\[.*\])/);
+
+      if (!match || !match[1]) return null;
+
+      // Parse JSON
+      return JSON.parse(match[1]);
+    } catch (err) {
+      console.error("Parse error:", err);
+      return null;
+    }
+  }
+
+  // bridge between external JS & React
+  function fun(value) {
+    const parsed = parseResLog(value);
+    if (parsed?.[0]["bp1"]) setStreamLogs(parsed?.[0]["bp1"] ?? "");
+    console.log("FUN RUNNING WITH DATA:", parsed);
+  }
+
+  useEffect(() => {
+    // expose function to JS window scope
+    window.fun = fun;
+  }, []);
+
   return (
     <>
-      {/* Load jQuery + Bootstrap js */}
+      {/* Load jQuery + Bootstrap */}
       <Script
         src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"
         strategy="afterInteractive"
@@ -14,19 +49,21 @@ export default function DemoPage() {
         strategy="afterInteractive"
       />
 
-      {/* Load your old JS files */}
+      {/* Load your original JS files */}
       <Script src="/hslib.js" strategy="afterInteractive" />
       <Script src="/demo.js" strategy="afterInteractive" />
       <Script src="/neo.js" strategy="afterInteractive" />
 
-      {/* Bootstrp CSS */}
+      {/* Bootstrap CSS */}
       <link
         rel="stylesheet"
         href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
       />
 
       <div className="container-fluid">
-        <h1>Subscribing to HSM demo</h1>
+        <h1 onClick={() => console.log("tes123 streamLogs", streamLogs)}>
+          Subscribing to HSM demo
+        </h1>
         <p>You can use this page to get live broadcast, pause, resume etc.</p>
 
         {/* Token Section */}
@@ -35,10 +72,8 @@ export default function DemoPage() {
             className="col-sm-12"
             style={{ backgroundColor: "MediumSeaGreen" }}
           >
-            Token <input type="text" id="token_id" />
-            <br />
-            SID <input type="text" id="sid" />
-            <br />
+            Token <input type="text" id="token_id" /> <br />
+            SID <input type="text" id="sid" /> <br />
             Data Center
             <select id="datacenter_id">
               <option value="gdc">gdc</option>
@@ -53,12 +88,11 @@ export default function DemoPage() {
           </div>
         </div>
 
-        {/* Channel Actions */}
+        {/* Streaming controls */}
         <div className="row text-primary">
           <div className="col-sm-3">
             Do Action on Channel # <br />
             <input type="text" id="channel_number" defaultValue="1" />
-            <br />
             <br />
             <input
               type="button"
@@ -75,7 +109,8 @@ export default function DemoPage() {
             />
             <br />
             <br />
-            Channels <br />
+            Channels
+            <br />
             <input
               type="button"
               id="pause_channel"
@@ -102,7 +137,7 @@ export default function DemoPage() {
             />
           </div>
 
-          {/* Subscribe Blocks */}
+          {/* Subscribe panels */}
           <div className="col-sm-3">
             Stream for Scrips <br />
             <textarea
@@ -146,25 +181,35 @@ export default function DemoPage() {
           </div>
         </div>
 
-        {/* Streaming output */}
+        {/* Streaming console & React viewer */}
         <div className="row">
-          <div className="col-sm-3">&nbsp;</div>
           <div className="col-sm-9">
-            Streaming ... Scrips
-            <br />
+            Streaming ... Scrips <br />
             <textarea id="stream_scrips" rows={10} cols={100}></textarea>
             <br />
-            Streaming ... Orders
-            <br />
+            Streaming ... Orders <br />
             <textarea id="stream_scrips1" rows={10} cols={100}></textarea>
           </div>
         </div>
 
         <hr />
-        <p>
-          For HandshakeServerId - Call POST
-          https://lhsi.kotaksecurities.com/quick/user/handshake?sId=server34
-        </p>
+
+        {/* Display the state version */}
+        <div
+          style={{
+            background: "#eee",
+            padding: "10px",
+            marginTop: "20px",
+            borderRadius: "4px",
+          }}
+        >
+          <h3>React State Stream Data: {streamLogs}</h3>
+          <ul>
+            {/* {streamLogs.map((msg, i) => (
+              <li key={i}>{msg}</li>
+            ))} */}
+          </ul>
+        </div>
       </div>
     </>
   );

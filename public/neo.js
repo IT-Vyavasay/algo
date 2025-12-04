@@ -52,6 +52,8 @@ function wsub(typeRequest, scrips, channel_number) {
 }
 
 function consoleLog(printLogs) {
+  console.log("test12345", printLogs);
+  fun(printLogs);
   const d = new Date();
   $("#stream_scrips").append(d + "\n");
   $("#stream_scrips").append(printLogs);
